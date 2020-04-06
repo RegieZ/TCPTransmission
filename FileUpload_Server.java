@@ -1,20 +1,23 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FileUpload_Server {
     public static void main(String[] args) throws IOException {
+        ExecutorService service = Executors.newFixedThreadPool(2);
         // 1. 创建服务端ServerSocket
         ServerSocket serverSocket = new ServerSocket(9956);
         System.out.println("Server is set up ...");
         // 2. 循环接收,建立连接
         while (true) {
-            Socket accept = serverSocket.accept();
+            Socket accept = serverSocket.accept();//socket要定义在while外面，否则就会堵塞
           	/*
           	3. socket对象交给子线程处理,进行读写操作
                Runnable接口中,只有一个run方法,使用lambda表达式简化格式
             */
-            new Thread(() -> {
+            Thread t = new Thread(() -> {
                 try (
                         //3.1 获取输入流对象
                         BufferedInputStream bis = new BufferedInputStream(accept.getInputStream());
@@ -43,7 +46,8 @@ public class FileUpload_Server {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }).start();
+            });
+            service.submit(t);
         }
     }
 }
